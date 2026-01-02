@@ -1,0 +1,37 @@
+{
+  "name": "@mermaid-chat/client-app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:debug": "playwright test --debug",
+    "e2e:report": "playwright show-report"
+  },
+  "dependencies": {
+    "@mermaid-chat/api-client": "workspace:*",
+    "@mermaid-chat/chat": "workspace:*",
+    "@mermaid-chat/mermaid": "workspace:*",
+    "@mermaid-chat/types": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@internal/shared-config": "workspace:*",
+    "@playwright/test": "^1.57.0",
+    "@tailwindcss/vite": "^4.0.7",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.0"
+  }
+}

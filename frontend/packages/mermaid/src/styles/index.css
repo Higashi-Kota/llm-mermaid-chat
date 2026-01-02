@@ -1,0 +1,342 @@
+@import "tailwindcss";
+
+/* Local CSS variables (replacing @file-explorer/design-tokens) */
+:root {
+  --color-border-subtle: #e5e7eb;
+  --color-border: #e5e7eb;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-fg: #111827;
+  --color-fg-muted: #6b7280;
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-active: #1d4ed8;
+  --color-ring: #3b82f6;
+  --color-destructive: #ef4444;
+  --color-destructive-subtle: #fef2f2;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+/* Mermaid Viewer Base */
+.mermaid-viewer {
+  /* Reset button styles */
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  /* Custom styles */
+  display: block;
+  width: 100%;
+  position: relative;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md, 8px);
+  background-color: var(--color-surface, #fff);
+  padding: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.mermaid-viewer:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mermaid-viewer:focus-visible {
+  outline: 2px solid var(--color-ring, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Static (non-interactive) mode */
+.mermaid-viewer-static {
+  cursor: default;
+}
+
+.mermaid-viewer-static:hover {
+  box-shadow: none;
+}
+
+.mermaid-viewer-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-viewer-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Loading State */
+.mermaid-viewer-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 12px;
+  color: var(--color-fg-muted, #6b7280);
+}
+
+.mermaid-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border, #e5e7eb);
+  border-top-color: var(--color-primary, #3b82f6);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.mermaid-viewer-error {
+  padding: 16px;
+  background-color: var(--color-destructive-subtle, #fef2f2);
+  border-color: var(--color-destructive, #ef4444);
+}
+
+.mermaid-error-title {
+  font-weight: 600;
+  color: var(--color-destructive, #ef4444);
+  margin-bottom: 8px;
+}
+
+.mermaid-error-details {
+  font-size: 12px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  color: var(--color-fg-muted, #6b7280);
+  background: var(--color-surface-subtle, #f9fafb);
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Fullscreen Overlay */
+.mermaid-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: var(--color-surface, #fff);
+  display: flex;
+  flex-direction: column;
+}
+
+.mermaid-fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: var(--color-surface-subtle, #f9fafb);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.mermaid-fullscreen-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-fg, #111827);
+}
+
+.mermaid-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background-color: transparent;
+  color: var(--color-fg-muted, #6b7280);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.mermaid-close-btn:hover {
+  background-color: var(--color-surface-hover, #f3f4f6);
+  color: var(--color-fg, #111827);
+}
+
+.mermaid-close-btn:focus-visible {
+  outline: 2px solid var(--color-ring, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Fullscreen Content (pan-zoom area) */
+.mermaid-fullscreen-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  background-color: var(--color-surface, #fff);
+}
+
+.mermaid-fullscreen-content.panning {
+  cursor: grabbing;
+}
+
+.mermaid-fullscreen-wrapper {
+  position: absolute;
+  transform-origin: 0 0;
+}
+
+.mermaid-fullscreen-wrapper svg {
+  display: block;
+}
+
+/* Zoom Controls - Figma-style floating at bottom center */
+.mermaid-zoom-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mermaid-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background-color: transparent;
+  color: var(--color-fg, #111827);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.mermaid-zoom-btn:hover {
+  background-color: var(--color-surface-hover, #f3f4f6);
+}
+
+.mermaid-zoom-btn:focus-visible {
+  outline: 2px solid var(--color-ring, #3b82f6);
+  outline-offset: -2px;
+}
+
+.mermaid-zoom-info {
+  min-width: 48px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-fg-muted, #6b7280);
+  user-select: none;
+}
+
+/* Minimap */
+.mermaid-minimap {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background-color: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  /* Interactive cursor - pointer for click-to-navigate action */
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.mermaid-minimap.dragging {
+  cursor: grabbing;
+}
+
+.mermaid-minimap-content {
+  opacity: 0.7;
+}
+
+.mermaid-minimap-content svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+}
+
+.mermaid-minimap-viewport {
+  position: absolute;
+  border: 2px solid var(--color-primary, #3b82f6);
+  background-color: rgba(59, 130, 246, 0.2);
+  border-radius: 2px;
+  /* Interactive */
+  pointer-events: auto;
+  cursor: grab;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.mermaid-minimap-viewport:hover {
+  border-color: var(--color-primary-hover, #2563eb);
+  background-color: rgba(59, 130, 246, 0.35);
+}
+
+.mermaid-minimap.dragging .mermaid-minimap-viewport,
+.mermaid-minimap-viewport:active {
+  cursor: grabbing;
+  border-color: var(--color-primary-active, #1d4ed8);
+  background-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-border-subtle: #374151;
+    --color-border: #374151;
+    --color-surface: #1f2937;
+    --color-surface-subtle: #111827;
+    --color-surface-hover: #374151;
+    --color-fg: #f9fafb;
+    --color-fg-muted: #9ca3af;
+  }
+
+  .mermaid-viewer {
+    background-color: var(--color-surface, #1f2937);
+    border-color: var(--color-border, #374151);
+  }
+
+  .mermaid-fullscreen-overlay {
+    background-color: var(--color-surface, #111827);
+  }
+
+  .mermaid-fullscreen-header {
+    background-color: var(--color-surface-subtle, #1f2937);
+    border-color: var(--color-border, #374151);
+  }
+
+  .mermaid-zoom-controls,
+  .mermaid-minimap {
+    background-color: var(--color-surface, #1f2937);
+    border-color: var(--color-border, #374151);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mermaid-spinner {
+    animation: none;
+  }
+
+  .mermaid-viewer,
+  .mermaid-close-btn,
+  .mermaid-zoom-btn,
+  .mermaid-minimap-viewport {
+    transition: none;
+  }
+}

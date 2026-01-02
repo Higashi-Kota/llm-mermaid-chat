@@ -1,0 +1,2 @@
+/* Re-export for Vite alias compatibility in dev mode */
+@import "./styles/index.css";
