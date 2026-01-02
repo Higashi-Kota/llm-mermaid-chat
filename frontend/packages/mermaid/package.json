@@ -1,0 +1,42 @@
+{
+  "name": "@mermaid-chat/mermaid",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "rslib build --watch",
+    "build": "rslib build",
+    "typecheck": "tsc -p tsconfig.typecheck.json"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "mermaid": "^11.4.1",
+    "ts-pattern": "^5.6.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@internal/shared-config": "workspace:*",
+    "@rslib/core": "^0.6.3",
+    "@tailwindcss/vite": "^4.0.7",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,8 @@
+packages:
+  - backend
+  - frontend/packages/*
+  - frontend/apps/*
+  - shared-config
+
+ignoredBuiltDependencies:
+  - esbuild
