@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID, uuid4
 
-from sqlalchemy import Index, Text
+from sqlalchemy import DateTime, Index, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -45,7 +45,8 @@ class Diagram(Base):
     prompt: Mapped[str] = mapped_column(Text)
     language: Mapped[str] = mapped_column()
     diagram_type: Mapped[str] = mapped_column()
-    status: Mapped[DiagramStatus] = mapped_column()
+    # Use String storage to match migration (not PostgreSQL ENUM)
+    status: Mapped[DiagramStatus] = mapped_column(String, nullable=False)
 
     # Optional fields with explicit defaults
     mermaid_code: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
@@ -54,9 +55,13 @@ class Diagram(Base):
     latency_ms: Mapped[int | None] = mapped_column(nullable=True, default=None)
     attempts: Mapped[int] = mapped_column(default=0)
 
-    # Timestamp fields with factory defaults
-    created_at: Mapped[datetime] = mapped_column(default=utc_now)
-    updated_at: Mapped[datetime] = mapped_column(default=utc_now, onupdate=utc_now)
+    # Timestamp fields (timezone=True to match migration TIMESTAMPTZ)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
 
     # Table-level configuration
     __table_args__ = (Index("idx_diagrams_created_at", "created_at"),)

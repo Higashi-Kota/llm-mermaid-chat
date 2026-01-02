@@ -112,6 +112,9 @@ async def _save_diagram_result(
             latency_ms=latency_ms,
             attempts=result.get("attempts", 1),
         )
+        # Explicit commit for SSE - session cleanup timing is uncertain
+        await db.commit()
+        logger.info(f"Saved diagram to database: trace_id={trace_id}")
     except Exception as e:
         # Log but don't fail the request if DB save fails
         logger.exception(f"Failed to save diagram to database: {e}")
