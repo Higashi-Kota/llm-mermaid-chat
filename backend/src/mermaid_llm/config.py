@@ -23,14 +23,10 @@ class Settings(BaseSettings):
 
     @property
     def effective_database_url(self) -> str:
-        """Get effective database URL, defaulting to SQLite in mock mode."""
-        if self.database_url:
-            return self.database_url
-        if self.is_mock_mode:
-            return "sqlite+aiosqlite:///:memory:"
-        return (
-            "postgresql+asyncpg://mermaid_llm:dev_password@localhost:5432/mermaid_llm"
-        )
+        """Get effective database URL."""
+        if not self.database_url:
+            raise ValueError("DATABASE_URL is required.")
+        return self.database_url
 
     # Application
     debug: bool = False

@@ -59,22 +59,12 @@ docker compose down
 - **ci.yml**: PR/pushでlint, typecheck, test実行
 - **deploy.yml**: mainへのpushでDockerイメージビルド、マイグレーション、Renderデプロイ
 
-## 環境変数リファレンス
+## ローカル開発 (backend/.env)
 
-### ローカル開発 (backend/.env)
-
-| 変数 | 必須 | 説明 |
-|-----|-----|------|
-| DATABASE_URL | Yes | `postgresql+asyncpg://...@localhost:5434/...` |
-| OPENAI_API_KEY | Yes | OpenAI APIキー |
-| USE_MOCK | No | `true` でモックモード |
-
-### 本番 (Render)
+Docker Composeで起動するため、DATABASE_URLは不要です。
 
 | 変数 | 必須 | 説明 |
 |-----|-----|------|
-| DATABASE_URL | Yes | Neon PostgreSQL接続URL |
-| OPENAI_API_KEY | Yes | OpenAI APIキー |
-| USE_MOCK | No | `false` (本番) |
-| PORT | No | 10000 (Render標準) |
-| CORS_ORIGINS | No | フロントエンドURL |
+| OPENAI_API_KEY | No | 省略時はモックモード |
+
+> **Note**: E2Eテストは`USE_MOCK=true`で実行され、DB操作をスキップします。

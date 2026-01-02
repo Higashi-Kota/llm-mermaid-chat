@@ -1,14 +1,19 @@
 """Database module."""
 
 from mermaid_llm.db.models import Base, Diagram, DiagramStatus
-from mermaid_llm.db.session import async_session_maker, engine, get_db, get_session
+from mermaid_llm.db.session import (
+    get_async_session_maker,
+    get_db,
+    get_engine,
+    get_session,
+)
 
 __all__ = [
     "Base",
     "Diagram",
     "DiagramStatus",
-    "async_session_maker",
-    "engine",
+    "get_async_session_maker",
     "get_db",
+    "get_engine",
     "get_session",
 ]

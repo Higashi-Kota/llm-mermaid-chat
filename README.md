@@ -21,23 +21,13 @@ pnpm install
 cd backend && uv sync
 ```
 
-### 環境変数
-
-```bash
-# backend/.env
-OPENAI_API_KEY=your-api-key
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/mermaid_llm
-```
-
 ### 開発サーバー起動
 
 ```bash
-# フロントエンド (http://localhost:5175)
-pnpm dev
-
-# バックエンド (http://localhost:8000)
-cd backend && uv run fastapi dev src/mermaid_llm/main.py
+docker compose up -d
 ```
+
+OpenAI APIを使う場合は`backend/.env`にOPENAI_API_KEYを設定（省略時はモックモード）。
 
 ## API スキーマ管理
 
