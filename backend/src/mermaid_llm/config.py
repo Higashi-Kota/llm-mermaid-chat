@@ -23,10 +23,14 @@ class Settings(BaseSettings):
 
     @property
     def effective_database_url(self) -> str:
-        """Get effective database URL."""
+        """Get effective database URL for asyncpg."""
         if not self.database_url:
             raise ValueError("DATABASE_URL is required.")
-        return self.database_url
+        # Convert postgresql:// to postgresql+asyncpg:// for async driver
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
     # Application
     debug: bool = False
