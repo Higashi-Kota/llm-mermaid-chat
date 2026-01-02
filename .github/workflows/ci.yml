@@ -72,15 +72,13 @@ jobs:
       - name: Cache uv dependencies
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/uv
-            backend/.venv
+          path: ~/.cache/uv
           key: uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/pyproject.toml') }}
           restore-keys: |
             uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
 
       - name: Lint (ruff check)
         run: uv run ruff check src/ tests/

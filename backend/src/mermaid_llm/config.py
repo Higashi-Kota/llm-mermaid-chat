@@ -49,8 +49,8 @@ class Settings(BaseSettings):
         ]
         # Add configured origins
         if self.cors_origins:
-            extra_origins = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
-            return default_origins + extra_origins
+            extra = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+            return default_origins + extra
         return default_origins
 
 
