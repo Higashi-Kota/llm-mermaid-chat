@@ -1,6 +1,7 @@
 """Application configuration using Pydantic Settings."""
 
 from functools import lru_cache
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,10 +27,22 @@ class Settings(BaseSettings):
         """Get effective database URL for asyncpg."""
         if not self.database_url:
             raise ValueError("DATABASE_URL is required.")
-        # Convert postgresql:// to postgresql+asyncpg:// for async driver
         url = self.database_url
+        # Convert postgresql:// to postgresql+asyncpg:// for async driver
         if url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Parse and transform query parameters for asyncpg compatibility
+        parsed = urlparse(url)
+        if parsed.query:
+            params = parse_qs(parsed.query)
+            # Convert sslmode to ssl (Neon uses sslmode, asyncpg uses ssl)
+            if "sslmode" in params:
+                params["ssl"] = params.pop("sslmode")
+            # Remove channel_binding (not supported by asyncpg)
+            params.pop("channel_binding", None)
+            new_query = urlencode(params, doseq=True)
+            parsed = parsed._replace(query=new_query)
+            url = urlunparse(parsed)
         return url
 
     # Application
