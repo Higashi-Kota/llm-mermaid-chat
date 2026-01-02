@@ -18,7 +18,7 @@ from mermaid_llm.db.models import Base
 config = context.config
 
 # Set database URL from settings (not from alembic.ini)
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", settings.effective_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
