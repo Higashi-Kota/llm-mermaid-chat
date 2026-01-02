@@ -4,10 +4,20 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import TypedDict
 
+from mermaid_llm.api.error_codes import ErrorCode
 from mermaid_llm.graph.state import DiagramState, DiagramType
 
 logger = logging.getLogger(__name__)
+
+
+class ValidationError(TypedDict):
+    """Structured validation error."""
+
+    code: ErrorCode
+    message: str
+
 
 # Basic Mermaid syntax patterns for validation
 DIAGRAM_PATTERNS: dict[DiagramType, str] = {
@@ -21,12 +31,18 @@ DIAGRAM_PATTERNS: dict[DiagramType, str] = {
 }
 
 
-def validate_mermaid_syntax(code: str, diagram_type: DiagramType) -> list[str]:
-    """Validate Mermaid syntax and return list of errors."""
-    errors: list[str] = []
+def validate_mermaid_syntax(
+    code: str, diagram_type: DiagramType
+) -> list[ValidationError]:
+    """Validate Mermaid syntax and return list of structured errors."""
+    errors: list[ValidationError] = []
 
     if not code or not code.strip():
-        errors.append("Empty diagram code")
+        errors.append(
+            ValidationError(
+                code=ErrorCode.GENERATION_EMPTY, message="Empty diagram code"
+            )
+        )
         return errors
 
     lines = code.strip().split("\n")
@@ -42,26 +58,51 @@ def validate_mermaid_syntax(code: str, diagram_type: DiagramType) -> list[str]:
                 found_type = True
                 break
         if not found_type:
-            errors.append(f"Invalid diagram declaration for type '{diagram_type}'")
+            errors.append(
+                ValidationError(
+                    code=ErrorCode.VALIDATION_INVALID_TYPE,
+                    message=f"Invalid diagram declaration for type '{diagram_type}'",
+                )
+            )
 
     # Check for common syntax errors
     open_brackets = code.count("[") + code.count("{") + code.count("(")
     close_brackets = code.count("]") + code.count("}") + code.count(")")
     if open_brackets != close_brackets:
-        errors.append("Unbalanced brackets in diagram")
+        errors.append(
+            ValidationError(
+                code=ErrorCode.VALIDATION_UNBALANCED_BRACKETS,
+                message="Unbalanced brackets in diagram",
+            )
+        )
 
     # Check for empty node definitions
     if re.search(r"\[\s*\]", code):
-        errors.append("Empty node label detected")
+        errors.append(
+            ValidationError(
+                code=ErrorCode.VALIDATION_EMPTY_NODE,
+                message="Empty node label detected",
+            )
+        )
 
     # Check for invalid arrow syntax in flowcharts
     if diagram_type == "flowchart":
         # Valid arrows: -->, --->, -.->-, ==>, etc.
         invalid_arrows = re.findall(r"[A-Za-z0-9_]+\s*-+[^->|]+[A-Za-z0-9_]+", code)
         if invalid_arrows:
-            errors.append("Possible invalid arrow syntax in flowchart")
+            errors.append(
+                ValidationError(
+                    code=ErrorCode.VALIDATION_SYNTAX_ERROR,
+                    message="Possible invalid arrow syntax in flowchart",
+                )
+            )
 
     return errors
+
+
+def errors_to_strings(errors: list[ValidationError]) -> list[str]:
+    """Convert structured errors to string list for backward compatibility."""
+    return [e["message"] for e in errors]
 
 
 # Return type for validate_mermaid node
@@ -89,11 +130,13 @@ async def validate_mermaid(state: DiagramState) -> ValidateResult:
             "errors": validation_errors,
         }
 
-    errors = validate_mermaid_syntax(mermaid_code, diagram_type)
+    structured_errors = validate_mermaid_syntax(mermaid_code, diagram_type)
+    # Convert structured errors to strings for backward compatibility
+    error_strings = errors_to_strings(structured_errors)
     # Combine existing errors with validation errors
-    all_errors: list[str] = existing_errors + errors
+    all_errors: list[str] = existing_errors + error_strings
 
     return {
-        "is_valid": len(errors) == 0,
+        "is_valid": len(structured_errors) == 0,
         "errors": all_errors if all_errors else [],
     }

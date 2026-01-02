@@ -19,6 +19,8 @@ class TestGenerateMermaid:
             "prompt": "Create a login flow",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 0,
@@ -36,6 +38,8 @@ class TestGenerateMermaid:
             "prompt": "Create a sequence diagram",
             "language": "en",
             "diagram_type": "sequence",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 0,
@@ -52,6 +56,8 @@ class TestGenerateMermaid:
             "prompt": "Create a gantt chart",
             "language": "en",
             "diagram_type": "gantt",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 0,
@@ -68,6 +74,8 @@ class TestGenerateMermaid:
             "prompt": "Create a large complex flowchart",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 0,
@@ -75,7 +83,9 @@ class TestGenerateMermaid:
         }
         result = await generate_mermaid(state)
         # Large diagram should have subgraphs
-        assert "subgraph" in result["mermaid_code"]
+        mermaid_code = result["mermaid_code"]
+        assert isinstance(mermaid_code, str)
+        assert "subgraph" in mermaid_code
         assert result["attempts"] == 1
 
     @pytest.mark.asyncio
@@ -85,10 +95,14 @@ class TestGenerateMermaid:
             "prompt": "巨大なフローチャートを作成",
             "language": "ja",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 0,
             "is_valid": False,
         }
         result = await generate_mermaid(state)
-        assert "subgraph" in result["mermaid_code"]
+        mermaid_code = result["mermaid_code"]
+        assert isinstance(mermaid_code, str)
+        assert "subgraph" in mermaid_code

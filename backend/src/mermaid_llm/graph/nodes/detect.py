@@ -95,6 +95,17 @@ def detect_from_keywords(prompt: str) -> tuple[Language | None, DiagramType | No
     return language, diagram_type
 
 
+VALID_DIAGRAM_TYPES: set[DiagramType] = {
+    "flowchart",
+    "sequence",
+    "gantt",
+    "class",
+    "er",
+    "state",
+    "journey",
+}
+
+
 async def detect_language_and_type(
     state: DiagramState,
 ) -> dict[str, Language | DiagramType]:
@@ -107,15 +118,27 @@ async def detect_language_and_type(
         A dict with 'language' and 'diagram_type' keys.
     """
     prompt = state["prompt"]
+    diagram_hint = state.get("diagram_type_hint")
+    lang_hint = state.get("language_hint")
+
+    # Check if user provided a valid diagram type hint
+    forced_type: DiagramType | None = None
+    if diagram_hint and diagram_hint in VALID_DIAGRAM_TYPES:
+        forced_type = diagram_hint
+
+    # Check if user provided a valid language hint
+    forced_lang: Language | None = None
+    if lang_hint and lang_hint in ("ja", "en", "other"):
+        forced_lang = lang_hint
 
     # First try keyword detection
     keyword_lang, keyword_type = detect_from_keywords(prompt)
 
     if settings.is_mock_mode:
-        # In mock mode, use keyword detection or defaults
+        # In mock mode, use hint > keyword detection > defaults
         return {
-            "language": keyword_lang or "ja",
-            "diagram_type": keyword_type or "flowchart",
+            "language": forced_lang or keyword_lang or "ja",
+            "diagram_type": forced_type or keyword_type or "flowchart",
         }
 
     # Use LLM for detection
@@ -136,14 +159,22 @@ async def detect_language_and_type(
         detected_type: str = data.get("diagram_type", "flowchart")
 
         # Validate and use keyword detection if more specific
-        final_lang: Language = keyword_lang or (
-            detected_lang if detected_lang in ("ja", "en", "other") else "en"
+        # Language hint takes priority over LLM/keyword detection
+        final_lang: Language = (
+            forced_lang
+            or keyword_lang
+            or (detected_lang if detected_lang in ("ja", "en", "other") else "en")
         )
-        final_type: DiagramType = keyword_type or (
-            detected_type
-            if detected_type
-            in ("flowchart", "sequence", "gantt", "class", "er", "state", "journey")
-            else "flowchart"
+        # Diagram type hint takes priority over LLM/keyword detection
+        final_type: DiagramType = (
+            forced_type
+            or keyword_type
+            or (
+                detected_type
+                if detected_type
+                in ("flowchart", "sequence", "gantt", "class", "er", "state", "journey")
+                else "flowchart"
+            )
         )
 
         return {
@@ -155,6 +186,6 @@ async def detect_language_and_type(
         logger.warning(f"Failed to detect language/type via LLM: {e}")
 
     return {
-        "language": keyword_lang or "en",
-        "diagram_type": keyword_type or "flowchart",
+        "language": forced_lang or keyword_lang or "en",
+        "diagram_type": forced_type or keyword_type or "flowchart",
     }

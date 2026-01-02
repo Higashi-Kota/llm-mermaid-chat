@@ -8,8 +8,9 @@ Create Date: 2026-01-02 19:58:56.386673
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "1057950ea7b4"
@@ -48,9 +49,7 @@ def upgrade() -> None:
     )
 
     # Create index on created_at for efficient ordering
-    op.create_index(
-        "idx_diagrams_created_at", "diagrams", ["created_at"], unique=False
-    )
+    op.create_index("idx_diagrams_created_at", "diagrams", ["created_at"], unique=False)
 
 
 def downgrade() -> None:

@@ -1,64 +1,100 @@
 # LLM Mermaid Chat
 
-自然言語プロンプトからMermaid図を生成するチャットアプリ
-
-## 機能
-
-- SSEストリーミングでリアルタイム生成
-- 7種類の図（flowchart, sequence, gantt, class, er, state, journey）
-- pan-zoom, フルスクリーン対応
-
-## クイックスタート
-
-### 前提条件
-
-- Node.js 22+
-- pnpm
-- Python 3.11+
-- uv
-- Docker
-
-### 起動
-
-```bash
-# DB起動
-docker compose up postgres -d
-
-# バックエンド
-cd backend
-cp .env.example .env  # OPENAI_API_KEY を設定
-uv sync
-uv run fastapi dev src/mermaid_llm/main.py
-
-# フロントエンド (別ターミナル)
-pnpm install
-pnpm dev
-```
-
-http://localhost:5174 でアクセス
-
-### 停止
-
-```bash
-docker compose down
-```
-
-### 環境変数 (backend/.env)
-
-```
-DATABASE_URL=postgresql+asyncpg://mermaid_llm:dev_password@localhost:5433/mermaid_llm
-OPENAI_API_KEY=sk-...
-USE_MOCK=false
-```
+プロンプトからMermaid図を生成するチャットアプリケーション。
 
 ## 技術スタック
 
-| 領域 | 技術 |
-|-----|------|
-| Frontend | React 19, Vite, Tailwind CSS, Mermaid |
-| Backend | FastAPI, LangGraph, SQLAlchemy, PostgreSQL |
-| LLM | OpenAI (gpt-4o) |
+- **Frontend**: React 19, TypeScript, pnpm monorepo
+- **Backend**: FastAPI, LangGraph, OpenAI API
+- **Database**: PostgreSQL (asyncpg)
+- **API定義**: TypeSpec → OpenAPI 3.0
 
-## ドキュメント
+## セットアップ
 
-- [docs/deploy.md](./docs/deploy.md) - デプロイ手順
+### 依存関係のインストール
+
+```bash
+# フロントエンド
+pnpm install
+
+# バックエンド
+cd backend && uv sync
+```
+
+### 環境変数
+
+```bash
+# backend/.env
+OPENAI_API_KEY=your-api-key
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/mermaid_llm
+```
+
+### 開発サーバー起動
+
+```bash
+# フロントエンド (http://localhost:5175)
+pnpm dev
+
+# バックエンド (http://localhost:8000)
+cd backend && uv run fastapi dev src/mermaid_llm/main.py
+```
+
+## API スキーマ管理
+
+このプロジェクトはTypeSpecでAPIスキーマを定義し、コード生成を行っています。
+
+### スキーマの変更手順
+
+1. `specs/` ディレクトリ内の `.tsp` ファイルを編集
+2. コード生成を実行:
+
+```bash
+pnpm generate:all
+```
+
+3. 生成されたコードをコミット
+
+### コマンド
+
+```bash
+pnpm spec:compile      # TypeSpec → OpenAPI 3.0 変換
+pnpm generate:all      # スキーマ変換 + フロントエンドクライアント生成
+```
+
+> **重要**: OpenAPIスキーマを変更した場合は、必ず `pnpm generate:all` を実行し、生成されたコードをコミットしてください。
+
+## プロジェクト構造
+
+```
+frontend/
+  apps/client-app/     # メインアプリ
+  packages/
+    api-client/        # 生成されたAPIクライアント (orval)
+    types/             # 共有型定義
+    mermaid/           # Mermaidビューアー
+specs/
+  main.tsp             # TypeSpec定義
+  tsp-output/          # 生成されたOpenAPI
+backend/
+  src/mermaid_llm/     # FastAPI + LangGraph
+  tests/               # pytest
+```
+
+## テスト
+
+```bash
+# フロントエンド
+pnpm lint && pnpm typecheck
+
+# バックエンド
+cd backend
+uv run ruff check . && uv run pyright
+uv run pytest
+
+# E2Eテスト
+pnpm --filter client-app test:e2e
+```
+
+## ライセンス
+
+MIT

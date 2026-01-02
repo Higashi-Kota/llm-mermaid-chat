@@ -51,7 +51,7 @@ class TestDiagramAPI:
         assert "text/event-stream" in response.headers.get("content-type", "")
 
         # Parse SSE events
-        events = []
+        events: list[str] = []
         for line in response.text.split("\n"):
             if line.startswith("event:"):
                 event_type = line.replace("event:", "").strip()

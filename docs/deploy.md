@@ -12,7 +12,7 @@ docker compose down
 
 | サービス | ポート | 説明 |
 |---------|-------|------|
-| postgres | 5433 | PostgreSQL |
+| postgres | 5434 | PostgreSQL |
 | backend | 8000 | FastAPI |
 | frontend | 5175 | Nginx |
 
@@ -65,7 +65,7 @@ docker compose down
 
 | 変数 | 必須 | 説明 |
 |-----|-----|------|
-| DATABASE_URL | Yes | `postgresql+asyncpg://...@localhost:5433/...` |
+| DATABASE_URL | Yes | `postgresql+asyncpg://...@localhost:5434/...` |
 | OPENAI_API_KEY | Yes | OpenAI APIキー |
 | USE_MOCK | No | `true` でモックモード |
 

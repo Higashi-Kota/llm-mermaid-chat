@@ -1,0 +1,309 @@
+openapi: 3.0.0
+info:
+  title: Mermaid LLM Chat API
+  version: 0.0.0
+tags:
+  - name: diagram
+  - name: health
+paths:
+  /api/diagram:
+    post:
+      operationId: DiagramOperations_generate
+      description: |-
+        Generate a Mermaid diagram from the prompt (non-streaming).
+        Returns the complete diagram once generation is finished.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagramResponse'
+      tags:
+        - diagram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagramRequest'
+  /api/diagram/stream:
+    post:
+      operationId: DiagramOperations_stream
+      description: |-
+        Generate a Mermaid diagram with SSE streaming.
+        Returns a stream of events: meta, chunk, done, or error.
+
+        Event types:
+        - `meta`: Initial metadata (trace_id, model, diagram_type, language)
+        - `chunk`: Partial mermaid code updates
+        - `done`: Final result with complete mermaid code and metadata
+        - `error`: Error event with structured error information
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            text/plain:
+              schema:
+                type: string
+      tags:
+        - diagram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagramRequest'
+  /health:
+    get:
+      operationId: HealthOperations_check
+      description: Check API health status
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+      tags:
+        - health
+components:
+  schemas:
+    DiagramMeta:
+      type: object
+      required:
+        - model
+        - latency_ms
+        - attempts
+        - trace_id
+      properties:
+        model:
+          type: string
+          description: Model used for generation
+        latency_ms:
+          type: integer
+          format: int32
+          description: Time taken in milliseconds
+        attempts:
+          type: integer
+          format: int32
+          description: Number of generation attempts
+        trace_id:
+          type: string
+          description: Unique trace identifier
+      description: Metadata about diagram generation
+    DiagramRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: User's prompt describing the diagram to generate
+        diagram_type_hint:
+          type: string
+          nullable: true
+          description: Optional hint for diagram type (null or "auto" = auto-detect)
+        language_hint:
+          type: string
+          nullable: true
+          description: Optional hint for output language (null or "auto" = auto-detect)
+      description: Request to generate a Mermaid diagram
+    DiagramResponse:
+      type: object
+      required:
+        - mermaid_code
+        - diagram_type
+        - language
+        - errors
+        - meta
+      properties:
+        mermaid_code:
+          type: string
+          description: Generated Mermaid code
+        diagram_type:
+          allOf:
+            - $ref: '#/components/schemas/DiagramType'
+          description: Detected or specified diagram type
+        language:
+          allOf:
+            - $ref: '#/components/schemas/Language'
+          description: Detected or specified language
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of errors encountered during generation
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/DiagramMeta'
+          description: Generation metadata
+      description: Response from diagram generation
+    DiagramType:
+      type: string
+      enum:
+        - flowchart
+        - sequence
+        - gantt
+        - class
+        - er
+        - state
+        - journey
+      description: Supported diagram types
+    ErrorCategory:
+      type: string
+      enum:
+        - network
+        - generation
+        - validation
+        - rate_limit
+        - server
+        - unknown
+      description: Error categories for grouping related errors
+    ErrorCode:
+      type: string
+      enum:
+        - NETWORK_DISCONNECTED
+        - NETWORK_TIMEOUT
+        - NETWORK_UNKNOWN
+        - GENERATION_FAILED
+        - GENERATION_TIMEOUT
+        - GENERATION_EMPTY
+        - GENERATION_INVALID
+        - VALIDATION_SYNTAX_ERROR
+        - VALIDATION_PARSE_ERROR
+        - VALIDATION_UNKNOWN
+        - RATE_LIMIT_EXCEEDED
+        - SERVER_INTERNAL_ERROR
+        - SERVER_UNAVAILABLE
+        - UNKNOWN_ERROR
+      description: Error codes for structured error handling
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
+      description: Health check response
+    Language:
+      type: string
+      enum:
+        - ja
+        - en
+        - other
+      description: Supported languages for generation
+    SSEChunkEvent:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+      description: Chunk event containing partial mermaid code
+    SSEDoneEvent:
+      type: object
+      required:
+        - mermaid_code
+        - diagram_type
+        - language
+        - errors
+        - meta
+      properties:
+        mermaid_code:
+          type: string
+        diagram_type:
+          type: string
+        language:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/DiagramMeta'
+      description: Completion event with final result
+    SSEErrorEvent:
+      type: object
+      required:
+        - code
+        - category
+        - message
+        - trace_id
+        - retryable
+      properties:
+        code:
+          type: string
+        category:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+        trace_id:
+          type: string
+        retryable:
+          type: boolean
+      description: Error event sent when generation fails
+    SSEMetaEvent:
+      type: object
+      required:
+        - trace_id
+        - model
+        - diagram_type
+        - language
+      properties:
+        trace_id:
+          type: string
+        model:
+          type: string
+        diagram_type:
+          type: string
+        language:
+          type: string
+      description: |-
+        SSE Event Types for streaming diagram generation.
+        These models document the SSE event structure but are not directly
+        used in OpenAPI since SSE responses are text/event-stream.Initial metadata event sent at stream start
+    StructuredError:
+      type: object
+      required:
+        - code
+        - category
+        - message
+        - retryable
+      properties:
+        code:
+          allOf:
+            - $ref: '#/components/schemas/ErrorCode'
+          description: Error code for programmatic handling
+        category:
+          allOf:
+            - $ref: '#/components/schemas/ErrorCategory'
+          description: Error category for grouping
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: array
+          items:
+            type: string
+          description: Additional error details
+        trace_id:
+          type: string
+          description: Trace ID for debugging
+        retryable:
+          type: boolean
+          description: Whether the operation can be retried
+      description: Structured error response
+servers:
+  - url: http://localhost:8000
+    description: Development server
+    variables: {}

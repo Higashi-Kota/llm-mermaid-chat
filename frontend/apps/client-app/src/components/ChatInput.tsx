@@ -1,17 +1,23 @@
 import { useChatSubmit } from "@mermaid-chat/chat"
 import { Loader2, Send } from "lucide-react"
+import { useState } from "react"
+
+import { type DiagramTypeHint, DiagramTypeSelector } from "./DiagramTypeSelector"
 
 type ChatInputProps = {
-  onSubmit: (message: string) => void
+  onSubmit: (message: string, diagramTypeHint: DiagramTypeHint) => void
   isDisabled?: boolean
 }
 
 export function ChatInput({ onSubmit, isDisabled }: ChatInputProps) {
+  const [diagramTypeHint, setDiagramTypeHint] = useState<DiagramTypeHint>("auto")
+
   const { getTextareaProps, shortcutHintLabels, triggerSubmit } = useChatSubmit({
     onSubmit: (value, { target }) => {
       if (value.trim()) {
-        onSubmit(value.trim())
+        onSubmit(value.trim(), diagramTypeHint)
         target.value = ""
+        setDiagramTypeHint("auto") // Reset after submit
       }
     },
     mode: "mod-enter",
@@ -20,6 +26,14 @@ export function ChatInput({ onSubmit, isDisabled }: ChatInputProps) {
 
   return (
     <div className='border-t border-gray-200 bg-white p-4'>
+      <div className='mb-3'>
+        <span className='mb-1 block text-xs text-gray-500'>図種 (オプション)</span>
+        <DiagramTypeSelector
+          value={diagramTypeHint}
+          onChange={setDiagramTypeHint}
+          disabled={isDisabled}
+        />
+      </div>
       <div className='flex gap-3'>
         <textarea
           {...getTextareaProps({

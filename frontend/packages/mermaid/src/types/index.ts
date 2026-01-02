@@ -153,4 +153,8 @@ export interface FullscreenOverlayProps {
   readonly isOpen: boolean
   readonly onClose: () => void
   readonly children: React.ReactNode
+  /** Handler for SVG export */
+  readonly onExportSvg?: () => void
+  /** Handler for PNG export */
+  readonly onExportPng?: () => Promise<void>
 }

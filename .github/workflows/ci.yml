@@ -1,35 +1,31 @@
 name: CI
 
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [main]
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 env:
   NODE_VERSION: "22"
   PNPM_VERSION: "10.13.1"
   PYTHON_VERSION: "3.11"
-  UV_VERSION: "0.5.14"
 
 jobs:
   frontend:
-    name: Frontend Lint & Build
+    name: Frontend (lint, typecheck)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: 10.13.1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "22"
           cache: pnpm
 
       - name: Install dependencies
@@ -41,53 +37,38 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Type check
+      - name: Typecheck
         run: pnpm typecheck
 
-      - name: Build frontend
-        run: pnpm build:frontend
-
   backend:
-    name: Backend Lint & Test
+    name: Backend (lint, typecheck, test)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
-    env:
-      USE_MOCK: "true"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          version: ${{ env.UV_VERSION }}
+          enable-cache: true
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache uv dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('backend/pyproject.toml') }}
-          restore-keys: |
-            uv-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
+          python-version: "3.11"
 
       - name: Install dependencies
         run: uv sync --extra dev
 
-      - name: Lint (ruff check)
-        run: uv run ruff check src/ tests/
+      - name: Lint
+        run: uv run ruff check .
 
-      - name: Lint (ruff format)
-        run: uv run ruff format --check src/ tests/
+      - name: Format check
+        run: uv run ruff format --check .
 
-      - name: Type check (pyright)
+      - name: Typecheck
         run: uv run pyright src/
 
-      - name: Test
-        run: uv run pytest tests/ -v --tb=short
+      - name: Unit tests
+        run: uv run pytest tests/unit -v

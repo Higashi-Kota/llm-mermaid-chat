@@ -1,0 +1,32 @@
+{
+  "name": "@mermaid-chat/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "orval",
+    "build": "rslib build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist src/generated",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "@rslib/core": "^0.14.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@internal/shared-config": "workspace:*",
+    "@types/node": "^24.10.1",
+    "orval": "^7.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5"
+  }
+}

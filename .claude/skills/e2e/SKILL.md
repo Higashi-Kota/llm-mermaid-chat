@@ -28,14 +28,14 @@ export default defineConfig({
     timeout: 10000,
   },
   use: {
-    baseURL: "http://localhost:5174",
+    baseURL: "http://localhost:5175",
     trace: "on-first-retry",
     actionTimeout: 5000,
     navigationTimeout: 10000,
   },
   webServer: {
     command: "pnpm dev",
-    url: "http://localhost:5174",
+    url: "http://localhost:5175",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
@@ -129,7 +129,7 @@ When running E2E verification via Claude Code:
 
 2. Navigate to page:
    mcp__chrome-devtools__navigate_page
-   url: "http://localhost:5174"
+   url: "http://localhost:5175"
 
 3. Take accessibility snapshot:
    mcp__chrome-devtools__take_snapshot

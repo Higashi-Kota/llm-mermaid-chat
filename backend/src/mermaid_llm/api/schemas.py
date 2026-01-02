@@ -7,13 +7,13 @@ class DiagramRequest(BaseModel):
     """Request schema for diagram generation."""
 
     prompt: str = Field(..., min_length=1, description="Prompt describing the diagram")
-    language_hint: str = Field(
-        default="auto", description="Language hint: auto, ja, or en"
+    language_hint: str | None = Field(
+        default=None, description="Language hint: null/auto, ja, or en"
     )
-    diagram_type_hint: str = Field(
-        default="auto",
+    diagram_type_hint: str | None = Field(
+        default=None,
         description=(
-            "Diagram type hint: auto, flowchart, sequence, "
+            "Diagram type hint: null/auto, flowchart, sequence, "
             "gantt, class, er, state, journey"
         ),
     )
@@ -57,5 +57,8 @@ class SSEErrorEvent(BaseModel):
     """SSE error event data."""
 
     code: str
+    category: str
     message: str
+    details: list[str] | None = None
     trace_id: str
+    retryable: bool = True

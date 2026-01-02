@@ -1,9 +1,12 @@
 import mermaid from "mermaid"
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
+
+import { exportPng, exportSvg, generateFilename } from "../core/export"
 import { DEFAULT_ZOOM_CONSTRAINTS, toTransformCSS } from "../core/transform"
 import { parseSvgDimensions } from "../core/viewport"
 import { useMermaidStore } from "../store/useMermaidStore"
 import type { MermaidViewerProps, SvgDimensions } from "../types"
+
 import { FullscreenOverlay } from "./FullscreenOverlay"
 import { Minimap } from "./Minimap"
 import { ZoomControls } from "./ZoomControls"
@@ -80,6 +83,7 @@ export function MermaidViewer({
 }: MermaidViewerProps) {
   // Refs
   const contentRef = useRef<HTMLDivElement>(null)
+  const svgWrapperRef = useRef<HTMLDivElement>(null)
 
   // Subscribe to store
   const snapshot = useMermaidStore(store)
@@ -223,6 +227,23 @@ export function MermaidViewer({
     store.endPan()
   }
 
+  // Export handlers
+  const handleExportSvg = useCallback(() => {
+    if (snapshot.svgContent) {
+      exportSvg(snapshot.svgContent, generateFilename("svg"))
+    }
+  }, [snapshot.svgContent])
+
+  const handleExportPng = useCallback(async () => {
+    const svgElement = svgWrapperRef.current?.querySelector("svg")
+    if (svgElement) {
+      await exportPng(svgElement as SVGElement, {
+        filename: generateFilename("png"),
+        scale: 2,
+      })
+    }
+  }, [])
+
   // Loading state
   if (snapshot.isLoading) {
     return (
@@ -282,7 +303,12 @@ export function MermaidViewer({
       </button>
 
       {/* Fullscreen overlay */}
-      <FullscreenOverlay isOpen={snapshot.isFullscreen} onClose={closeFullscreen}>
+      <FullscreenOverlay
+        isOpen={snapshot.isFullscreen}
+        onClose={closeFullscreen}
+        onExportSvg={handleExportSvg}
+        onExportPng={handleExportPng}
+      >
         <div
           ref={contentRef}
           role='application'
@@ -295,6 +321,7 @@ export function MermaidViewer({
           onMouseLeave={handleMouseLeave}
         >
           <div
+            ref={svgWrapperRef}
             className='mermaid-fullscreen-wrapper'
             style={{ transform: toTransformCSS(transformState) }}
             // biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid SVG output

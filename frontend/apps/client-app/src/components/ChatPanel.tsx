@@ -1,10 +1,11 @@
 import type { Message } from "@/stores/chatStore"
 import { ChatHistory } from "./ChatHistory"
 import { ChatInput } from "./ChatInput"
+import type { DiagramTypeHint } from "./DiagramTypeSelector"
 
 type ChatPanelProps = {
   messages: readonly Message[]
-  onSubmit: (message: string) => void
+  onSubmit: (message: string, diagramTypeHint: DiagramTypeHint) => void
   isLoading: boolean
 }
 

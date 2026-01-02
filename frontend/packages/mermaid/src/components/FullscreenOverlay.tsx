@@ -1,12 +1,21 @@
 import { X } from "lucide-react"
 import { useEffect } from "react"
 import { createPortal } from "react-dom"
+
 import type { FullscreenOverlayProps } from "../types"
+
+import { ExportControls } from "./ExportControls"
 
 /**
  * Fullscreen overlay for mermaid diagram viewer
  */
-export function FullscreenOverlay({ isOpen, onClose, children }: FullscreenOverlayProps) {
+export function FullscreenOverlay({
+  isOpen,
+  onClose,
+  children,
+  onExportSvg,
+  onExportPng,
+}: FullscreenOverlayProps) {
   // Handle ESC key to close
   useEffect(() => {
     if (!isOpen) return undefined
@@ -34,6 +43,8 @@ export function FullscreenOverlay({ isOpen, onClose, children }: FullscreenOverl
 
   if (!isOpen) return null
 
+  const showExportControls = onExportSvg && onExportPng
+
   return createPortal(
     <div
       className='mermaid-fullscreen-overlay'
@@ -43,15 +54,20 @@ export function FullscreenOverlay({ isOpen, onClose, children }: FullscreenOverl
     >
       <div className='mermaid-fullscreen-header'>
         <h3 className='mermaid-fullscreen-title'>Mermaid Diagram</h3>
-        <button
-          type='button'
-          onClick={onClose}
-          className='mermaid-close-btn'
-          aria-label='Close fullscreen (Escape)'
-          title='Close (ESC)'
-        >
-          <X size={20} />
-        </button>
+        <div className='flex items-center gap-3'>
+          {showExportControls && (
+            <ExportControls onExportSvg={onExportSvg} onExportPng={onExportPng} />
+          )}
+          <button
+            type='button'
+            onClick={onClose}
+            className='mermaid-close-btn'
+            aria-label='Close fullscreen (Escape)'
+            title='Close (ESC)'
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
       {children}
     </div>,

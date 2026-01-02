@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from mermaid_llm.config import settings
 
 engine = create_async_engine(
-    settings.database_url,
+    settings.effective_database_url,
     echo=settings.debug,
 )
 

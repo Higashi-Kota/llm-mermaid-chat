@@ -13,6 +13,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
+from mermaid_llm.api.error_codes import (
+    ErrorCode,
+    get_error_category,
+    get_error_message,
+    is_retryable,
+)
 from mermaid_llm.api.schemas import (
     DiagramMeta,
     DiagramRequest,
@@ -34,12 +40,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/diagram", tags=["diagram"])
 
 
-def create_initial_state(prompt: str) -> DiagramState:
-    """Create initial state for the graph."""
+def create_initial_state(
+    prompt: str,
+    diagram_type_hint: str | None = None,
+    language_hint: str | None = None,
+) -> DiagramState:
+    """Create initial state for the graph.
+
+    Args:
+        prompt: User's input prompt.
+        diagram_type_hint: Optional diagram type hint (None/"auto" = auto-detect).
+        language_hint: Optional language hint (None/"auto" = auto-detect).
+    """
+    # Normalize "auto" to None (auto-detect)
+    type_hint = None if diagram_type_hint in (None, "auto") else diagram_type_hint
+    lang_hint = None if language_hint in (None, "auto") else language_hint
     return {
         "prompt": prompt,
         "language": "en",
         "diagram_type": "flowchart",
+        "diagram_type_hint": type_hint,
+        "language_hint": lang_hint,
         "mermaid_code": None,
         "errors": [],
         "attempts": 0,
@@ -105,7 +126,9 @@ async def generate_diagram(
     start = time.perf_counter()
     trace_id = str(uuid4())
 
-    initial_state = create_initial_state(request.prompt)
+    initial_state = create_initial_state(
+        request.prompt, request.diagram_type_hint, request.language_hint
+    )
     # LangGraph types are not fully typed
     result: dict[str, Any] = await diagram_graph.ainvoke(  # type: ignore[reportUnknownMemberType]
         initial_state
@@ -114,15 +137,16 @@ async def generate_diagram(
     latency_ms = int((time.perf_counter() - start) * 1000)
     model_name = "mock" if settings.is_mock_mode else settings.openai_model
 
-    # Save to database
-    await _save_diagram_result(
-        db,
-        trace_id=trace_id,
-        prompt=request.prompt,
-        result=result,
-        model_name=model_name,
-        latency_ms=latency_ms,
-    )
+    # Save to database (skip in mock mode for E2E tests without DB)
+    if not settings.is_mock_mode:
+        await _save_diagram_result(
+            db,
+            trace_id=trace_id,
+            prompt=request.prompt,
+            result=result,
+            model_name=model_name,
+            latency_ms=latency_ms,
+        )
 
     return DiagramResponse(
         mermaid_code=result.get("mermaid_code") or "",
@@ -138,6 +162,29 @@ async def generate_diagram(
     )
 
 
+def create_error_event(
+    code: ErrorCode,
+    trace_id: str,
+    event_id: int,
+    details: list[str] | None = None,
+) -> dict[str, Any]:
+    """Create a structured error event."""
+    return {
+        "id": f"{trace_id}:{event_id}",
+        "event": "error",
+        "data": json.dumps(
+            {
+                "code": code.value,
+                "category": get_error_category(code).value,
+                "message": get_error_message(code),
+                "details": details,
+                "trace_id": trace_id,
+                "retryable": is_retryable(code),
+            }
+        ),
+    }
+
+
 @router.post("/stream")
 async def stream_diagram(
     request: DiagramRequest,
@@ -148,12 +195,17 @@ async def stream_diagram(
     async def event_generator() -> AsyncGenerator[dict[str, Any], None]:
         trace_id = str(uuid4())
         start = time.perf_counter()
+        event_id = 0
 
-        initial_state = create_initial_state(request.prompt)
+        initial_state = create_initial_state(
+            request.prompt, request.diagram_type_hint, request.language_hint
+        )
         model_name = "mock" if settings.is_mock_mode else settings.openai_model
 
         # Send meta event first
+        event_id += 1
         yield {
+            "id": f"{trace_id}:{event_id}",
             "event": "meta",
             "data": json.dumps(
                 {
@@ -176,7 +228,9 @@ async def stream_diagram(
                 for _node_name, output in chunk.items():
                     # Send chunk events for mermaid code updates
                     if "mermaid_code" in output and output["mermaid_code"]:
+                        event_id += 1
                         yield {
+                            "id": f"{trace_id}:{event_id}",
                             "event": "chunk",
                             "data": json.dumps({"text": output["mermaid_code"]}),
                         }
@@ -189,33 +243,33 @@ async def stream_diagram(
 
         except Exception as e:
             logger.exception(f"Error during diagram streaming: {e}")
-            yield {
-                "event": "error",
-                "data": json.dumps(
-                    {
-                        "code": "generation_failed",
-                        "message": str(e),
-                        "trace_id": trace_id,
-                    }
-                ),
-            }
+            event_id += 1
+            yield create_error_event(
+                ErrorCode.GENERATION_FAILED,
+                trace_id,
+                event_id,
+                details=[str(e)],
+            )
             return
 
         # Send done event with final result
         latency_ms = int((time.perf_counter() - start) * 1000)
 
         if final_result:
-            # Save to database
-            await _save_diagram_result(
-                db,
-                trace_id=trace_id,
-                prompt=request.prompt,
-                result=final_result,
-                model_name=model_name,
-                latency_ms=latency_ms,
-            )
+            # Save to database (skip in mock mode for E2E tests without DB)
+            if not settings.is_mock_mode:
+                await _save_diagram_result(
+                    db,
+                    trace_id=trace_id,
+                    prompt=request.prompt,
+                    result=final_result,
+                    model_name=model_name,
+                    latency_ms=latency_ms,
+                )
 
+            event_id += 1
             yield {
+                "id": f"{trace_id}:{event_id}",
                 "event": "done",
                 "data": json.dumps(
                     {
@@ -233,15 +287,11 @@ async def stream_diagram(
                 ),
             }
         else:
-            yield {
-                "event": "error",
-                "data": json.dumps(
-                    {
-                        "code": "no_result",
-                        "message": "No result generated",
-                        "trace_id": trace_id,
-                    }
-                ),
-            }
+            event_id += 1
+            yield create_error_event(
+                ErrorCode.GENERATION_EMPTY,
+                trace_id,
+                event_id,
+            )
 
     return EventSourceResponse(event_generator())

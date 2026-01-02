@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -22,7 +22,7 @@ from mermaid_llm.main import app  # noqa: E402
 
 
 @pytest.fixture
-def mock_settings() -> None:
+def mock_settings() -> Generator[None, None, None]:
     """Patch settings to use mock mode."""
     with patch.dict(os.environ, {"USE_MOCK": "true", "OPENAI_API_KEY": ""}):
         yield
@@ -40,7 +40,9 @@ def postgres_url() -> str:
 
     if use_testcontainers:
         try:
-            from testcontainers.postgres import PostgresContainer
+            from testcontainers.postgres import (  # type: ignore[import-untyped]
+                PostgresContainer,
+            )
 
             # Start PostgreSQL container for the test session
             postgres = PostgresContainer("postgres:16-alpine")

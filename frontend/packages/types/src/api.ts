@@ -65,8 +65,11 @@ export type SSEEventError = {
   type: "error"
   data: {
     code: string
+    category: string
     message: string
+    details?: string[]
     trace_id: string
+    retryable: boolean
   }
 }
 

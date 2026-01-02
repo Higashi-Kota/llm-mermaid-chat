@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite --port 5175",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.typecheck.json"
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:debug": "playwright test --debug",
+    "e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@mermaid-chat/api-client": "workspace:*",
     "@mermaid-chat/chat": "workspace:*",
     "@mermaid-chat/mermaid": "workspace:*",
     "@mermaid-chat/types": "workspace:*",
@@ -19,6 +24,7 @@
   },
   "devDependencies": {
     "@internal/shared-config": "workspace:*",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/vite": "^4.0.7",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.8",

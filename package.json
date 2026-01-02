@@ -17,7 +17,12 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "biome check .",
     "lint:fix": "biome check . --fix --unsafe",
-    "format": "biome format . --write"
+    "format": "biome format . --write",
+    "e2e": "pnpm --filter @mermaid-chat/client-app e2e",
+    "e2e:headed": "pnpm --filter @mermaid-chat/client-app e2e:headed",
+    "spec:compile": "pnpm --filter @mermaid-chat/specs compile",
+    "generate:all": "pnpm spec:compile && pnpm generate:frontend",
+    "generate:frontend": "pnpm --filter @mermaid-chat/api-client generate"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

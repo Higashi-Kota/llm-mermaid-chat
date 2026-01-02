@@ -30,7 +30,7 @@ class TestValidateMermaidSyntax:
         """Test validating empty code."""
         errors = validate_mermaid_syntax("", "flowchart")
         assert len(errors) == 1
-        assert "Empty diagram code" in errors[0]
+        assert errors[0]["message"] == "Empty diagram code"
 
     def test_unbalanced_brackets(self):
         """Test detecting unbalanced brackets."""
@@ -38,21 +38,21 @@ class TestValidateMermaidSyntax:
     A[Start --> B{Decision}
     B -->|Yes| C[End]"""
         errors = validate_mermaid_syntax(code, "flowchart")
-        assert any("Unbalanced brackets" in e for e in errors)
+        assert any(e["message"] == "Unbalanced brackets in diagram" for e in errors)
 
     def test_empty_node_label(self):
         """Test detecting empty node labels."""
         code = """flowchart TD
     A[] --> B[Valid]"""
         errors = validate_mermaid_syntax(code, "flowchart")
-        assert any("Empty node label" in e for e in errors)
+        assert any(e["message"] == "Empty node label detected" for e in errors)
 
     def test_invalid_diagram_declaration(self):
         """Test detecting invalid diagram type declaration."""
         code = """invalid_diagram TD
     A[Start] --> B[End]"""
         errors = validate_mermaid_syntax(code, "flowchart")
-        assert any("Invalid diagram declaration" in e for e in errors)
+        assert any("Invalid diagram declaration" in e["message"] for e in errors)
 
     def test_graph_keyword_accepted(self):
         """Test that 'graph' keyword is accepted for flowchart."""
@@ -72,6 +72,8 @@ class TestValidateMermaid:
             "prompt": "test",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": """flowchart TD
     A[Start] --> B[End]""",
             "errors": [],
@@ -80,7 +82,9 @@ class TestValidateMermaid:
         }
         result = await validate_mermaid(state)
         assert result["is_valid"] is True
-        assert len(result["errors"]) == 0
+        errors = result["errors"]
+        assert isinstance(errors, list)
+        assert len(errors) == 0
 
     @pytest.mark.asyncio
     async def test_invalid_flowchart(self):
@@ -89,6 +93,8 @@ class TestValidateMermaid:
             "prompt": "test",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": """flowchart TD
     A[] --> B[End]""",
             "errors": [],
@@ -97,7 +103,9 @@ class TestValidateMermaid:
         }
         result = await validate_mermaid(state)
         assert result["is_valid"] is False
-        assert len(result["errors"]) > 0
+        errors = result["errors"]
+        assert isinstance(errors, list)
+        assert len(errors) > 0
 
     @pytest.mark.asyncio
     async def test_no_mermaid_code(self):
@@ -106,6 +114,8 @@ class TestValidateMermaid:
             "prompt": "test",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": [],
             "attempts": 1,
@@ -113,7 +123,9 @@ class TestValidateMermaid:
         }
         result = await validate_mermaid(state)
         assert result["is_valid"] is False
-        assert "No Mermaid code generated" in result["errors"]
+        errors = result["errors"]
+        assert isinstance(errors, list)
+        assert "No Mermaid code generated" in errors
 
     @pytest.mark.asyncio
     async def test_preserve_existing_errors(self):
@@ -122,10 +134,14 @@ class TestValidateMermaid:
             "prompt": "test",
             "language": "en",
             "diagram_type": "flowchart",
+            "diagram_type_hint": None,
+            "language_hint": None,
             "mermaid_code": None,
             "errors": ["Previous API error"],
             "attempts": 1,
             "is_valid": False,
         }
         result = await validate_mermaid(state)
-        assert "Previous API error" in result["errors"]
+        errors = result["errors"]
+        assert isinstance(errors, list)
+        assert "Previous API error" in errors

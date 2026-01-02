@@ -1,8 +1,13 @@
 // Components
+export { ExportControls } from "./components/ExportControls"
 export { FullscreenOverlay } from "./components/FullscreenOverlay"
 export { MermaidViewer } from "./components/MermaidViewer"
 export { Minimap } from "./components/Minimap"
 export { ZoomControls } from "./components/ZoomControls"
+export type { ExportOptions } from "./core/export"
+// Export utilities
+export { exportPng, exportSvg, generateFilename } from "./core/export"
+
 // Core functions
 export {
   calculateCenterOnPoint,

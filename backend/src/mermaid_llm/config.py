@@ -18,10 +18,19 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o"
 
-    # Database
-    database_url: str = (
-        "postgresql+asyncpg://mermaid_llm:dev_password@localhost:5432/mermaid_llm"
-    )
+    # Database - use SQLite in mock mode for E2E tests without DB
+    database_url: str = ""
+
+    @property
+    def effective_database_url(self) -> str:
+        """Get effective database URL, defaulting to SQLite in mock mode."""
+        if self.database_url:
+            return self.database_url
+        if self.is_mock_mode:
+            return "sqlite+aiosqlite:///:memory:"
+        return (
+            "postgresql+asyncpg://mermaid_llm:dev_password@localhost:5432/mermaid_llm"
+        )
 
     # Application
     debug: bool = False
@@ -40,10 +49,8 @@ class Settings(BaseSettings):
         """Get list of allowed CORS origins."""
         # Default origins for local development
         default_origins = [
-            "http://localhost:5174",
             "http://localhost:5175",
             "http://localhost:5173",
-            "http://127.0.0.1:5174",
             "http://127.0.0.1:5175",
             "http://127.0.0.1:5173",
         ]
