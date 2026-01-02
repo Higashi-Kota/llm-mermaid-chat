@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: dev_password
       POSTGRES_DB: mermaid_llm
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -57,6 +57,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: "http://localhost:8000"  # Direct access to backend
     ports:
       - "5175:80"
     depends_on:
