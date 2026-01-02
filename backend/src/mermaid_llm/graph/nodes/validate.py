@@ -65,9 +65,25 @@ def validate_mermaid_syntax(
                 )
             )
 
-    # Check for common syntax errors
-    open_brackets = code.count("[") + code.count("{") + code.count("(")
-    close_brackets = code.count("]") + code.count("}") + code.count(")")
+    # Check for common syntax errors (bracket balance)
+    # For ER diagrams, remove relationship cardinality syntax before counting
+    # (e.g., ||--o{, }o--||, }|..|{) as they use unbalanced braces by design
+    code_for_brackets = code
+    if diagram_type == "er":
+        # Remove ER relationship patterns: ||--o{, }o--||, }|..|{, etc.
+        er_pattern = r"[\|}][|o][-.]+-*[o|{][\|{]?|[|o}][-.]+-*[o|{]"
+        code_for_brackets = re.sub(er_pattern, "", code)
+
+    open_brackets = (
+        code_for_brackets.count("[")
+        + code_for_brackets.count("{")
+        + code_for_brackets.count("(")
+    )
+    close_brackets = (
+        code_for_brackets.count("]")
+        + code_for_brackets.count("}")
+        + code_for_brackets.count(")")
+    )
     if open_brackets != close_brackets:
         errors.append(
             ValidationError(
